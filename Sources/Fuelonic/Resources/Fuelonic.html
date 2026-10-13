@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuelonic</title>
+<style>
+  :root {
+    --bg: #1a1a1e;
+    --surface: #222228;
+    --surface2: #2a2a32;
+    --border: #333340;
+    --text: #e8e8f0;
+    --text-dim: #8888a0;
+    --accent: #c9a240;
+    --accent-hover: #d4b055;
+    --accent-dim: rgba(201,162,64,0.12);
+    --danger: #c44;
+    --danger-hover: #d55;
+    --green: #4a4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .container {
+    width: 100%;
+    max-width: 1100px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-align: center;
+    letter-spacing: -0.5px;
+  }
+  h1 span { color: var(--accent); }
+
+  /* Car Info Bar */
+  .car-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .car-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .car-info {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+  .car-info.empty { color: var(--text-dim); font-weight: 400; font-size: 14px; font-style: italic; }
+  .btn-car-edit {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-car-edit:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+  .car-editor {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .car-editor.open { display: flex; }
+  .car-editor .field { flex: 1; min-width: 200px; }
+  .car-editor input {
+    padding: 10px 14px;
+    font-size: 15px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+  }
+  .car-editor input:focus { border-color: var(--accent); }
+  .btn-car-save {
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #000;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-car-save:hover { background: var(--accent-hover); }
+
+  /* Stats Cards */
+  .car-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+  }
+  @media (max-width: 700px) {
+    .car-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .car-stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .car-stat-card .car-label { font-size: 10px; margin-bottom: 4px; }
+  .car-stat-card .car-info { font-size: 15px; }
+  .car-stat-card .car-info.empty { font-size: 12px; }
+
+  /* Form Card */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: border-color 0.3s;
+  }
+  .form-card.editing {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-dim), 0 4px 20px rgba(201,162,64,0.08);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    font-family: inherit;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+  input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    font-family: inherit;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+  }
+  .avg-price-label {
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-align: center;
+    min-height: 22px;
+  }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-save {
+    flex: 1;
+    padding: 16px;
+    background: var(--accent);
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-save:hover { background: var(--accent-hover); }
+  .btn-save:active { transform: scale(0.98); }
+  .btn-cancel {
+    padding: 16px 24px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-cancel:hover { background: var(--border); color: var(--text); }
+  .btn-save[hidden], .btn-cancel[hidden] { display: none; }
+
+  /* Table */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-header h2 { font-size: 16px; font-weight: 600; }
+  .btn-export {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+    margin-right: 10px;
+  }
+  .btn-export:hover { background: var(--accent); color: #000; }
+  .btn-import {
+    background: none;
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, color 0.2s;
+    margin-right: 10px;
+  }
+  .btn-import:hover { background: var(--green); color: #fff; }
+  #fileImport { display: none; }
+  .btn-clear {
+    background: none;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+  }
+  .btn-clear:hover { background: var(--danger); color: #fff; }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(201,162,64,0.04); }
+  .btn-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .btn-edit { color: var(--accent); }
+  .btn-edit:hover { color: var(--accent-hover); background: var(--accent-dim); }
+  .btn-del { color: var(--text-dim); }
+  .btn-del:hover { color: var(--danger); background: rgba(204,68,68,0.1); }
+  .actions-cell { width: 100px; text-align: center; }
+  .summary-row td {
+    background: var(--surface2);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+  }
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .currency { color: var(--green); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:30px;">
+    <svg width="48" height="48" viewBox="0 0 5000 5000" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3224.29,2099.7c282.47,41.64,450.6,256.65,452.05,533.36l4.13,789.46c.52,100.29,37.35,199.43,107.36,267.16,123.7,119.66,313.21,109.41,420.05-23.64,51.99-64.74,86.3-144.68,86.54-234.09l3.14-1135.5c-80.53-20.26-145.59-46.05-205.6-88.9-74.9-54.52-113.58-132.29-126.44-223.23-26.92-190.37-7.67-373.55,70.76-551.75l-449.25-414.16c-21.82-20.11-44.81-39.51-51.63-67.18,44.12-78.9,105.23-148.01,160.06-102.06l691.29,579.32c75.16,62.99,113.29,150.09,113.24,250.39l-.88,1721.99c-.15,301.96-211.12,573.97-509.26,573.06-306.38-.93-509.25-261.86-511.66-572.15l-6.2-798.06c-1.16-148.88-100.6-266.15-245.28-295.74l-2.43-208.29Z" fill="#c9a240"/>
+    <path d="M3398.76,4280.32c9.64,95.76-51.5,160.97-144.83,160.88l-2644.68-2.46c-72.93-.07-109.37-85.44-109.25-138.04.12-51.6,32.15-142.17,104.5-142.26l2658.63-3.04c75.64-.09,127.97,48.86,135.63,124.91Z" fill="#c9a240"/>
+    <path d="M3160.39,4090.95l-2422.85.76.47-3110.59c1.23-237.83,185.55-422.86,424.27-422.32l1610.5,3.6c222.43.5,387.47,201.88,388.15,417.7l-.53,3110.85Z" fill="#c9a240"/>
+    <path d="M2583.25,2153.98l-1267.11.13c-103.07.01-178.41-76.9-178.47-179.26l-.5-861.17c-.06-110.6,82.11-181.89,189.46-181.88l1250.55.08c100.16,0,183.84,67.42,183.73,171.56l-.99,880.07c-.11,98.16-74.7,170.46-176.65,170.47Z" fill="#ffffff"/>
+</svg>
+    <h1 style="margin:0;"><span>Fuelonic</span></h1>
+  </div>
+
+  <div class="car-bar" id="carBar">
+    <div>
+      <div class="car-label">Samochód</div>
+      <div class="car-info empty" id="carNameDisplay">Nie ustawiono</div>
+    </div>
+    <div>
+      <div class="car-label">Rejestracja</div>
+      <div class="car-info empty" id="carPlateDisplay">Nie ustawiono</div>
+    </div>
+    <div>
+      <div class="car-label">Paliwo</div>
+      <div class="car-info" id="carFuelDisplay" style="font-size:14px">Nie ustawiono</div>
+    </div>
+    <div class="car-stats-grid" id="carStatsGrid"></div>
+    <div class="car-editor" id="carEditor">
+      <div class="field">
+        <label for="carName">Nazwa samochodu</label>
+        <input type="text" id="carName" placeholder="np. BMW X5">
+      </div>
+      <div class="field">
+        <label for="carPlate">Numer rejestracyjny</label>
+        <input type="text" id="carPlate" placeholder="np. WA12345">
+      </div>
+      <div class="field">
+        <label for="carPurchaseDate">Data zakupu</label>
+        <input type="date" id="carPurchaseDate">
+      </div>
+      <div class="field">
+        <label for="carFuelType">Domyślne paliwo</label>
+        <select id="carFuelType">
+          <option value="ON">ON (Olej Napędowy)</option>
+          <option value="BP">BP (Benzyna)</option>
+          <option value="LPG">LPG (Gaz)</option>
+        </select>
+      </div>
+      <button class="btn-car-save" id="btnCarSave">Zapisz</button>
+    </div>
+    <button class="btn-car-edit" id="btnCarEdit">✎ Edytuj dane auta</button>
+  </div>
+
+  <div class="form-card" id="formCard">
+    <div class="form-grid">
+      <div class="field">
+        <label for="fDate">Data tankowania</label>
+        <input type="date" id="fDate" required>
+      </div>
+      <input type="hidden" id="fFuelType" value="ON">
+      <div class="field">
+        <label for="fOdometer">Przebieg (km)</label>
+        <input type="number" id="fOdometer" inputmode="numeric" min="0" step="1" placeholder="np. 125000" required>
+      </div>
+      <div class="field">
+        <label for="fDistance">Dystans (km)</label>
+        <input type="number" id="fDistance" inputmode="numeric" min="0" step="1" placeholder="np. 450" required>
+      </div>
+      <div class="field">
+        <label for="fVolume">Ilość paliwa (l)</label>
+        <input type="number" id="fVolume" inputmode="decimal" min="0" step="0.01" placeholder="np. 42,5" required>
+      </div>
+      <div class="field">
+        <label for="fPrice">Cena za 1 litr (zł)</label>
+        <input type="number" id="fPrice" inputmode="decimal" min="0" step="0.01" placeholder="np. 6,59" required>
+        <div class="avg-price-label" id="avgPriceLabel"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-save" id="btnSave">ZAPISZ</button>
+      <button class="btn-cancel" id="btnCancel" hidden>Anuluj</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header" style="flex-direction:column;gap:16px;">
+      <h2>Statystyki</h2>
+      <div class="car-stats-grid" id="topStatsGrid" style="grid-template-columns:repeat(3,1fr);max-width:600px;margin:0 auto;"></div>
+      <div>
+        <button class="btn-import" id="btnImport">Importuj CSV</button>
+        <input type="file" id="fileImport" accept=".csv" />
+        <button class="btn-export" id="btnExport">Eksportuj CSV</button>
+        <button class="btn-clear" id="btnClear">Wyczyść wszystko</button>
+      </div>
+      <h2 style="margin-top:10px;font-size:14px;">Historia tankowań</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Paliwo</th>
+            <th style="text-align:right">Przebieg</th>
+            <th style="text-align:right">Dystans</th>
+            <th style="text-align:right">Ilość (l)</th>
+            <th style="text-align:right">Cena/l (zł)</th>
+            <th style="text-align:right">Śr. cena/l (zł)</th>
+            <th style="text-align:right">Cena/tankowanie</th>
+            <th style="text-align:right">Cena/100 km</th>
+            <th style="text-align:center">Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+      <div class="empty-state" id="emptyState">Brak zapisanych tankowań</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'fuel_tracker_data';
+const CAR_KEY = 'fuel_tracker_car';
+let entries = JSON.parse(localStorage.getItem(KEY) || '[]');
+let editIdx = -1;
+let car = JSON.parse(localStorage.getItem(CAR_KEY) || '{}');
+
+// Car editor
+function renderCar() {
+  const nameEl = document.getElementById('carNameDisplay');
+  const plateEl = document.getElementById('carPlateDisplay');
+  const fuelEl = document.getElementById('carFuelDisplay');
+  const fuelNames = { 'ON': '🛢️ ON', 'BP': '⛽ BP', 'LPG': '⛽ LPG' };
+
+  if (car.name) {
+    nameEl.textContent = car.name;
+    nameEl.classList.remove('empty');
+  } else {
+    nameEl.textContent = 'Nie ustawiono';
+    nameEl.classList.add('empty');
+  }
+  if (car.plate) {
+    plateEl.textContent = car.plate;
+    plateEl.classList.remove('empty');
+  } else {
+    plateEl.textContent = 'Nie ustawiono';
+    plateEl.classList.add('empty');
+  }
+  if (car.fuelType) {
+    fuelEl.textContent = fuelNames[car.fuelType] || car.fuelType;
+    fuelEl.classList.remove('empty');
+    fuelEl.style.fontWeight = '700';
+    fuelEl.style.fontSize = '18px';
+  } else {
+    fuelEl.textContent = 'Nie ustawiono';
+    fuelEl.classList.add('empty');
+    fuelEl.style.fontWeight = '400';
+    fuelEl.style.fontSize = '14px';
+  }
+
+  renderStats();
+}
+
+function daysBetween(d1, d2) {
+  const date1 = new Date(d1);
+  const date2 = new Date(d2);
+  const diffMs = Math.abs(date2 - date1);
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function renderStats() {
+  const grid = document.getElementById('carStatsGrid');
+  if (!car.purchaseDate || entries.length === 0) {
+    grid.innerHTML = '';
+    return;
+  }
+
+  const data = getEntries().sort((a,b) => new Date(b.date) - new Date(a.date));
+  const firstDate = new Date(data[data.length - 1].date);
+  const lastDate = new Date(data[0].date);
+  const daysOwned = daysBetween(car.purchaseDate, lastDate);
+  const purchaseDateFormatted = `${car.purchaseDate.split('-').reverse().join('.')}`;
+
+  // Total stats
+  const totalVolume = data.reduce((s,e) => s + e.volume, 0);
+  const totalCost = data.reduce((s,e) => s + e.tankowanie, 0);
+  const totalDistance = data.reduce((s,e) => s + e.distance, 0);
+  const avgConsumption = totalDistance > 0 ? (totalVolume / totalDistance * 100) : 0;
+  const costPer100 = totalDistance > 0 ? (totalCost / totalDistance * 100) : 0;
+  const avgDailyKm = daysOwned > 0 ? (totalDistance / daysOwned) : 0;
+
+  grid.innerHTML = `
+    <div class="car-stat-card">
+      <div class="car-label">Zużycie /100 km</div>
+      <div class="car-info">${fmt(avgConsumption)}</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Koszt /100 km</div>
+      <div class="car-info">${fmt(costPer100)} zł</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Dni posiadania</div>
+      <div class="car-info">${daysOwned} dni</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:2px">od ${purchaseDateFormatted}</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Średnia dzienna</div>
+      <div class="car-info">${fmt(avgDailyKm)} km</div>
+    </div>
+  `;
+}
+
+document.getElementById('btnCarEdit').addEventListener('click', () => {
+  const editor = document.getElementById('carEditor');
+  editor.classList.toggle('open');
+  if (editor.classList.contains('open')) {
+    document.getElementById('carName').value = car.name || '';
+    document.getElementById('carPlate').value = car.plate || '';
+    document.getElementById('carPurchaseDate').value = car.purchaseDate || '';
+    document.getElementById('carFuelType').value = car.fuelType || 'ON';
+  }
+});
+
+document.getElementById('btnCarSave').addEventListener('click', () => {
+  car.name = document.getElementById('carName').value.trim();
+  car.plate = document.getElementById('carPlate').value.trim();
+  car.purchaseDate = document.getElementById('carPurchaseDate').value;
+  car.fuelType = document.getElementById('carFuelType').value;
+  localStorage.setItem(CAR_KEY, JSON.stringify(car));
+  renderCar();
+  document.getElementById('carEditor').classList.remove('open');
+});
+
+document.getElementById('carName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnCarSave').click();
+});
+document.getElementById('carPlate').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnCarSave').click();
+});
+
+function fmt(n, d=2) { return Number(n).toLocaleString('pl-PL', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+function fmtDate(s) { const [y,m,d] = s.split('-'); return `${d}.${m}.${y}`; }
+
+function getEntries() {
+  return entries.map(e => ({
+    ...e,
+    tankowanie: e.volume * e.price,
+    per100: e.distance > 0 ? (e.volume * e.price / e.distance * 100) : 0
+  }));
+}
+
+function getFuelLabel(type) {
+  const labels = { 'ON': '🛢️ ON', 'BP': '⛽ BP', 'LPG': '⛽ LPG' };
+  return labels[type] || type;
+}
+
+// Calculate average price for fuel type on a given date from local entries
+function calcAvgPriceForDate(fuelType, targetDate) {
+  const data = entries.filter(e => {
+    if (e.type !== fuelType) return false;
+    if (e.date !== targetDate) return false;
+    return true;
+  });
+
+  if (data.length === 0) return null;
+
+  const sum = data.reduce((s, e) => s + e.price, 0);
+  return sum / data.length;
+}
+
+function updateAvgPriceDisplay() {
+  const label = document.getElementById('avgPriceLabel');
+  const date = document.getElementById('fDate').value;
+  const fuelType = document.getElementById('fFuelType').value;
+
+  if (!date) {
+    label.textContent = '';
+    return;
+  }
+
+  const avgPrice = calcAvgPriceForDate(fuelType, date);
+  if (avgPrice) {
+    label.textContent = `Śr. cena ${fmt(avgPrice)} zł/l w tym dniu (${getEntries().filter(e => e.date === date && e.type === fuelType).length} tankowań)`;
+  } else {
+    label.textContent = '';
+  }
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  const tfoot = document.getElementById('tfoot');
+  const empty = document.getElementById('emptyState');
+  const data = getEntries().sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Precompute average prices per fuel type per date for the table
+  const dateFuelAvgMap = {};
+  data.forEach(e => {
+    const key = `${e.date}_${e.type || 'ON'}`;
+    if (!dateFuelAvgMap[key]) {
+      dateFuelAvgMap[key] = { sum: 0, count: 0 };
+    }
+    dateFuelAvgMap[key].sum += e.price;
+    dateFuelAvgMap[key].count++;
+  });
+  const dateFuelAvg = {};
+  Object.keys(dateFuelAvgMap).forEach(key => {
+    dateFuelAvg[key] = dateFuelAvgMap[key].sum / dateFuelAvgMap[key].count;
+  });
+
+  // Total km for top stats
+  const odometers = data.map(e => e.odometer);
+  const totalKm = odometers.length >= 2 ? Math.max(...odometers) - Math.min(...odometers) : 0;
+  const avgPer100 = data.reduce((s,e) => s + e.distance, 0) > 0 ? 
+    data.reduce((s,e) => s + e.tankowanie, 0) / data.reduce((s,e) => s + e.distance, 0) * 100 : 0;
+  const totalVolume = data.reduce((s,e) => s + e.volume, 0);
+  const totalDistance = data.reduce((s,e) => s + e.distance, 0);
+  const avgConsumption = totalDistance > 0 ? totalVolume / totalDistance * 100 : 0;
+
+  // Yearly km stats
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const prevYear = curYear - 1;
+  const yearEntries = data.filter(e => e.date.startsWith(String(curYear)));
+  const prevYearEntries = data.filter(e => e.date.startsWith(String(prevYear)));
+  const curYearKm = yearEntries.reduce((s, e) => s + e.distance, 0);
+  const prevYearKm = prevYearEntries.reduce((s, e) => s + e.distance, 0);
+  const yearDiff = curYearKm - prevYearKm;
+  const yearDiffStr = yearDiff > 0 ? `▲ +${fmt(yearDiff, 0)}` : yearDiff < 0 ? `▼ ${fmt(yearDiff, 0)}` : '—';
+  const yearDiffPct = prevYearKm > 0 ? ((yearDiff / prevYearKm) * 100).toFixed(0) : null;
+
+  // Average yearly km
+  const purchaseYear = car.purchaseDate ? parseInt(car.purchaseDate.split('-')[0]) : null;
+  const dataYears = data.length > 0 ? [parseInt(data[0].date.split('-')[0]), parseInt(data[data.length-1].date.split('-')[0])] : [];
+  const firstDataYear = dataYears.length > 0 ? Math.min(dataYears[0], purchaseYear || 9999) : null;
+  const lastDataYear = dataYears.length > 0 ? Math.max(dataYears[0], purchaseYear || 0) : null;
+  const numYears = firstDataYear && lastDataYear ? (lastDataYear - firstDataYear + 1) : 1;
+  const avgYearlyKm = numYears > 0 ? totalDistance / numYears : 0;
+
+  // Build yearly km data
+  const yearMap = {};
+  data.forEach(e => {
+    const yr = e.date.substring(0, 4);
+    if (!yearMap[yr]) yearMap[yr] = 0;
+    yearMap[yr] += e.distance;
+  });
+  const sortedYears = Object.keys(yearMap).sort();
+
+  // Top stats grid
+  document.getElementById('topStatsGrid').style.gridTemplateColumns = 'repeat(3,1fr)';
+  document.getElementById('topStatsGrid').innerHTML = `
+    <div class="car-stat-card">
+      <div class="car-label">Suma kilometrów</div>
+      <div class="car-info" style="font-size:18px;">${fmt(totalKm, 0)} km</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Zużycie średnie/100 km</div>
+      <div class="car-info" style="font-size:18px;">${fmt(avgConsumption)} l</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Koszt średni/100 km</div>
+      <div class="car-info" style="font-size:18px;">${fmt(avgPer100)} zł</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Kilometry rocznie</div>
+      <div class="car-info" style="font-size:18px;">${fmt(avgYearlyKm, 0)} km</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Kilometry ${curYear}</div>
+      <div class="car-info" style="font-size:18px;">${fmt(curYearKm, 0)} km</div>
+    </div>
+    <div class="car-stat-card">
+      <div class="car-label">Kilometry ${prevYear}</div>
+      <div class="car-info" style="font-size:18px;">${fmt(prevYearKm, 0)} km</div>
+      <div style="font-size:11px;color:${yearDiff > 0 ? 'var(--green)' : yearDiff < 0 ? 'var(--danger)' : 'var(--text-dim)'};margin-top:2px">${yearDiffStr}${yearDiffPct ? ' ('+yearDiffPct+'%)' : ''}</div>
+    </div>
+  `;
+
+  // Year dropdown
+  let yearOptions = '';
+  sortedYears.forEach(yr => {
+    yearOptions += `<option value="${yr}">${yr}: ${fmt(yearMap[yr], 0)} km</option>`;
+  });
+  const yearSelectHtml = `
+    <div style="grid-column:1/-1;margin-top:8px;">
+      <select id="yearSelect" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;">
+        <option value="__all">${sortedYears[0]}–${sortedYears[sortedYears.length-1]}: ${fmt(totalKm, 0)} km łącznie</option>
+        ${yearOptions}
+      </select>
+    </div>
+  `;
+  document.getElementById('topStatsGrid').innerHTML += yearSelectHtml;
+
+  // Year select handler — single listener that swaps views
+  const fullViewHtml = document.getElementById('topStatsGrid').innerHTML;
+
+  document.getElementById('yearSelect').addEventListener('change', function() {
+    if (this.value === '__all') {
+      document.getElementById('topStatsGrid').innerHTML = fullViewHtml;
+    } else {
+      const yr = this.value;
+      const yrKm = yearMap[yr] || 0;
+      const yrEntries = data.filter(e => e.date.startsWith(yr));
+      const yrVolume = yrEntries.reduce((s,e) => s + e.volume, 0);
+      const yrCost = yrEntries.reduce((s,e) => s + e.tankowanie, 0);
+      const yrConsumption = yrKm > 0 ? (yrVolume / yrKm * 100) : 0;
+      const yrPer100 = yrKm > 0 ? (yrCost / yrKm * 100) : 0;
+      const yrFirst = yrEntries.length > 0 ? yrEntries[0].date : '';
+      const yrLast = yrEntries.length > 0 ? yrEntries[yrEntries.length-1].date : '';
+      const yrDays = yrFirst && yrLast ? daysBetween(yrFirst, yrLast) : 0;
+      const yrAvgDaily = yrDays > 0 ? (yrKm / yrDays) : 0;
+      document.getElementById('topStatsGrid').innerHTML = `
+        <div class="car-stat-card">
+          <div class="car-label">Km w ${yr}</div>
+          <div class="car-info" style="font-size:18px;">${fmt(yrKm, 0)} km</div>
+        </div>
+        <div class="car-stat-card">
+          <div class="car-label">Zużycie /100 km</div>
+          <div class="car-info" style="font-size:18px;">${fmt(yrConsumption)} l</div>
+        </div>
+        <div class="car-stat-card">
+          <div class="car-label">Koszt /100 km</div>
+          <div class="car-info" style="font-size:18px;">${fmt(yrPer100)} zł</div>
+        </div>
+        <div class="car-stat-card">
+          <div class="car-label">Ilość paliwa</div>
+          <div class="car-info" style="font-size:18px;">${fmt(yrVolume)} l</div>
+        </div>
+        <div class="car-stat-card">
+          <div class="car-label">Średnia dzienna</div>
+          <div class="car-info" style="font-size:18px;">${fmt(yrAvgDaily, 0)} km</div>
+        </div>
+        ${yearSelectHtml}
+      `;
+    }
+  });
+
+  tbody.innerHTML = data.map((e, i) => {
+    const avgKey = `${e.date}_${e.type || 'ON'}`;
+    const avgPrice = dateFuelAvg[avgKey];
+    return `
+    <tr>
+      <td>${fmtDate(e.date)}</td>
+      <td>${getFuelLabel(e.type || 'ON')}</td>
+      <td class="num">${fmt(e.odometer, 0)}</td>
+      <td class="num">${fmt(e.distance, 0)}</td>
+      <td class="num">${fmt(e.volume)}</td>
+      <td class="num">${fmt(e.price)}</td>
+      <td class="num" style="color:var(--text-dim);font-size:13px">${avgPrice ? fmt(avgPrice) : '—'}</td>
+      <td class="num currency">${fmt(e.tankowanie)}</td>
+      <td class="num currency">${fmt(e.per100)}</td>
+      <td class="actions-cell">
+        <button class="btn-action btn-edit" onclick="editEntry(${i})" title="Edytuj">✎</button>
+        <button class="btn-action btn-del" onclick="delEntry(${i})" title="Usuń">✕</button>
+      </td>
+    </tr>
+  `}).join('');
+
+  // Footer - pusty, wszystkie statystyki na górze
+  tfoot.innerHTML = '';
+
+  renderCar(); // update stats cards
+}
+
+function saveEntry() {
+  const date = document.getElementById('fDate').value;
+  const odometer = parseFloat(document.getElementById('fOdometer').value);
+  const distance = parseFloat(document.getElementById('fDistance').value);
+  const volume = parseFloat(document.getElementById('fVolume').value);
+  const price = parseFloat(document.getElementById('fPrice').value);
+
+  if (!date || [odometer, distance, volume, price].some(isNaN)) {
+    alert('Wypełnij wszystkie pola');
+    return;
+  }
+
+  const obj = { date, type: car.fuelType || fuelType, odometer, distance, volume, price };
+
+  if (editIdx >= 0) {
+    entries.splice(editIdx, 1, obj);
+    exitEdit();
+  } else {
+    entries.push(obj);
+  }
+
+  localStorage.setItem(KEY, JSON.stringify(entries));
+  render();
+
+  document.getElementById('fOdometer').value = '';
+  document.getElementById('fDistance').value = '';
+  document.getElementById('fVolume').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fOdometer').focus();
+}
+
+function editEntry(idx) {
+  const data = getEntries().sort((a,b) => new Date(a.date) - new Date(b.date));
+  const e = data[idx];
+
+  document.getElementById('fDate').value = e.date;
+  document.getElementById('fFuelType').value = e.type || car.fuelType || 'ON';
+  document.getElementById('fOdometer').value = e.odometer;
+  document.getElementById('fDistance').value = e.distance;
+  document.getElementById('fVolume').value = e.volume;
+  document.getElementById('fPrice').value = e.price;
+
+  updateAvgPriceDisplay();
+
+  editIdx = idx;
+  document.getElementById('btnSave').textContent = 'ZAPISZ ZMIANY';
+  document.getElementById('btnCancel').hidden = false;
+  document.getElementById('formCard').classList.add('editing');
+  document.getElementById('fOdometer').focus();
+
+  window.scrollTo({ top: document.getElementById('formCard').offsetTop - 20, behavior: 'smooth' });
+}
+
+function exitEdit() {
+  editIdx = -1;
+  document.getElementById('btnSave').textContent = 'ZAPISZ';
+  document.getElementById('btnCancel').hidden = true;
+  document.getElementById('formCard').classList.remove('editing');
+}
+
+function cancelEdit() {
+  exitEdit();
+  document.getElementById('fDate').valueAsDate = new Date();
+  document.getElementById('fFuelType').value = car.fuelType || 'ON';
+  document.getElementById('fOdometer').value = '';
+  document.getElementById('fDistance').value = '';
+  document.getElementById('fVolume').value = '';
+  document.getElementById('fPrice').value = '';
+}
+
+function delEntry(idx) {
+  entries.splice(idx, 1);
+  localStorage.setItem(KEY, JSON.stringify(entries));
+  if (editIdx === idx) exitEdit();
+  if (editIdx > idx) editIdx--;
+  render();
+}
+
+function clearAll() {
+  if (confirm('Usunąć wszystkie dane tankowań?')) {
+    exitEdit();
+    entries = [];
+    localStorage.removeItem(KEY);
+    render();
+  }
+}
+
+document.getElementById('btnSave').addEventListener('click', saveEntry);
+document.getElementById('btnCancel').addEventListener('click', cancelEdit);
+document.getElementById('btnClear').addEventListener('click', clearAll);
+document.getElementById('btnExport').addEventListener('click', exportCSV);
+document.getElementById('btnImport').addEventListener('click', () => {
+  // Try native file picker first (macOS), fall back to message handler (iOS)
+  if (window.webkit?.messageHandlers?.importCSV) {
+    window.webkit.messageHandlers.importCSV.postMessage(null);
+  } else {
+    document.getElementById('fileImport').click();
+  }
+});
+document.getElementById('fileImport').addEventListener('change', importCSV);
+
+function importCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    parseCSVAndSave(event.target.result, file.name);
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function _importDataBase64(base64) {
+  const text = atob(base64);
+  parseCSVAndSave(text, 'importowany.csv');
+}
+
+function parseCSVAndSave(text, fileName) {
+  const lines = text.replace(/\uFEFF/g, '').split('\n').filter(l => l.trim());
+  const dataLines = lines.filter(l => !l.startsWith('Razem') && !l.startsWith('Suma'));
+  let count = 0;
+
+  dataLines.forEach(line => {
+    const parts = line.split(';');
+    if (parts.length >= 7) {
+      const dateStr = parts[0].split('.').reverse().join('-');
+      const odometer = parseFloat(parts[1].replace(',', '.'));
+      const distance = parseFloat(parts[2].replace(',', '.'));
+      const volume = parseFloat(parts[3].replace(',', '.'));
+      const price = parseFloat(parts[4].replace(',', '.'));
+
+      if (dateStr && !isNaN(odometer) && !isNaN(distance) && !isNaN(volume) && !isNaN(price)) {
+        // CSV has 7 columns: no fuel type column → default to ON
+        // If 8+ columns, try to read fuel type from parts[7]
+        let type = 'ON';
+        if (parts.length >= 8 && parts[7]) {
+          const t = parts[7].trim().toUpperCase();
+          if (t === 'BP' || t === 'LPG' || t === 'ON') type = t;
+        }
+        entries.push({ date: dateStr, type: type, odometer, distance, volume, price });
+        count++;
+      }
+    }
+  });
+
+  localStorage.setItem(KEY, JSON.stringify(entries));
+  render();
+  alert(`Zaimportowano ${count} wpisów z pliku ${fileName}`);
+}
+
+function exportCSV() {
+  if (entries.length === 0) { alert('Brak danych do eksportu'); return; }
+  const data = getEntries().sort((a,b) => new Date(a.date) - new Date(b.date));
+  const BOM = '\uFEFF';
+  let csv = BOM;
+  csv += 'Data;Przebieg;Dystans;Ilość paliwa (l);Cena/l (zł);Cena/tankowanie;Cena/100 km\n';
+  data.forEach(e => {
+    csv += `${fmtDate(e.date)};${fmt(e.odometer,0)};${fmt(e.distance,0)};${fmt(e.volume)};${fmt(e.price)};${fmt(e.tankowanie)};${fmt(e.per100)}\n`;
+  });
+
+  // Summary
+  const totalVolume = data.reduce((s,e) => s + e.volume, 0);
+  const totalCost = data.reduce((s,e) => s + e.tankowanie, 0);
+  const avgPer100 = totalVolume > 0 ? totalCost / data.reduce((s,e) => s + e.distance, 0) * 100 : 0;
+  let totalKm = 0;
+  if (data.length >= 2) {
+    const odometers = data.map(e => e.odometer);
+    totalKm = Math.max(...odometers) - Math.min(...odometers);
+  }
+  csv += `\nRazem;;;;${fmt(totalVolume)};${fmt(totalCost)};${fmt(avgPer100)}\n`;
+  csv += `Suma kilometrów;${fmt(totalKm,0)} km;;;;;\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fuel_tracker_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.querySelectorAll('input').forEach(inp => {
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') saveEntry(); });
+});
+
+// Event listeners for avg price display
+document.getElementById('fDate').addEventListener('change', updateAvgPriceDisplay);
+
+document.getElementById('fDate').valueAsDate = new Date();
+
+
+renderCar();
+render();
+</script>
+</body>
+</html>
